@@ -16,6 +16,7 @@ class LinkedInBlogScraper:
         self.email = email
         self.password = password
 
+
     def login(self):
         """Logs into LinkedIn."""
         self.driver.get("https://www.linkedin.com/login")
@@ -30,39 +31,39 @@ class LinkedInBlogScraper:
         time.sleep(5) 
 
 
-    
-
     def scrape_articles(self, url_path: str) -> tuple[list, int]:
         """Scrapes articles from the search results."""
-        
+        keywords = ["blog", "article", "post"]
+
         articles = []
         blogs_found = 0
         self.driver.get(url_path)
         post_elements = self.driver.find_elements(By.CLASS_NAME, 'search-results__search-feed-update')
 
         for post_element in post_elements:
+
             try:
                 feed_result = post_element.find_element(By.CLASS_NAME, 'feed-shared-update-v2__description')
-                # feed_result = post_element.find_element(By.CLASS_NAME, 'update-components-text relative update-components-update-v2__commentary')
             except common.exceptions.NoSuchElementException:
                 continue
+
             blog_text = feed_result.text
-            if "blog" in blog_text.lower() or "article" in blog_text.lower():
+            if any(keyword in blog_text for keyword in keywords):
                 blogs_found += 1
                 try:
-                    # Check for the presence of an <a> tag
                     link_elements = feed_result.find_elements(By.TAG_NAME, "a")
                     for link_element in link_elements:
                         blog_link = link_element.get_attribute("href")
 
                         # Filter out hashtags
-                        if "https://www.linkedin.com/feed/hashtag" not in blog_link:
+                        if "https://www.linkedin.com/feed/hashtag" not in blog_link and "mailto:" not in blog_link:
                             articles.append(blog_link)
                 except common.exceptions.NoSuchElementException:
                     print("No link found in the blog element.")
 
                     
         return articles, blogs_found,  len(post_elements)
+
 
     def close(self):
         """Closes the browser."""
